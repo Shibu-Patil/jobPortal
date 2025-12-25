@@ -16,6 +16,10 @@ exports.createCompany = async (req, res) => {
       requiredSkills,
       placementOpportunities,
       roleOverview,
+      companyWebsite,
+      jobDescriptionLink,
+      applicationLink,
+      brochureLink,
     } = req.body;
 
     const company = await Company.create({
@@ -28,6 +32,10 @@ exports.createCompany = async (req, res) => {
       requiredSkills,
       placementOpportunities,
       roleOverview,
+      companyWebsite,
+      jobDescriptionLink,
+      applicationLink,
+      brochureLink,
     });
 
     res.status(201).json({
@@ -45,15 +53,23 @@ exports.createCompany = async (req, res) => {
 // -----------------------------
 exports.getAllCompanies = async (req, res) => {
   try {
-    const companies = await Company.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, companies });
+    const companies = await Company.find()
+      .populate("usersApplied", "name email") // select only needed fields
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      companies,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
-
 // -----------------------------
-// GET SINGLE COMPANY BY ID
+// GET SINGLE COMPANY
 // -----------------------------
 exports.getCompanyById = async (req, res) => {
   try {
@@ -107,31 +123,34 @@ exports.deleteCompany = async (req, res) => {
 // -----------------------------
 exports.applyUserToCompany = async (req, res) => {
   try {
-    const { companyId} = req.body;
-   
+    const { companyId } = req.body;
+    const userId = req.user.id;
 
-    // console.log(req.use.id);
-const userId=req.user.id    
-    // Check company exists
+    // Find company
     const company = await Company.findById(companyId);
     if (!company) return res.status(404).json({ message: "Company not found" });
 
-    // Check user exists
+    // Find user
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Check if already applied
+    // Prevent duplicate application
     if (company.usersApplied.includes(userId)) {
       return res.status(400).json({ message: "User already applied to this company" });
     }
 
-    // Add user to applied list
+    // Add user to company
     company.usersApplied.push(userId);
+
+    // Add company to user
+    user.appliedCompanies.push(companyId);
+
     await company.save();
+    await user.save();
 
     res.status(200).json({
       success: true,
-      message: "User applied to company successfully",
+      message: "User applied successfully",
       companyId: company._id,
       userId: user._id,
     });
@@ -141,7 +160,7 @@ const userId=req.user.id
 };
 
 // -----------------------------
-// GET ALL USERS WHO APPLIED TO COMPANY
+// GET ALL USERS WHO APPLIED TO A COMPANY
 // -----------------------------
 exports.getUsersApplied = async (req, res) => {
   try {
@@ -153,6 +172,24 @@ exports.getUsersApplied = async (req, res) => {
       companyId: company._id,
       companyName: company.companyName,
       usersApplied: company.usersApplied,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// -----------------------------
+// GET ALL COMPANIES USER APPLIED FOR
+// -----------------------------
+exports.getUserAppliedCompanies = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("appliedCompanies");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({
+      success: true,
+      appliedCompanies: user.appliedCompanies,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

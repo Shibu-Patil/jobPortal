@@ -7,9 +7,68 @@ const bcrypt = require("bcryptjs");
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 
+// exports.registerUser = async (req, res) => {
+//   try {
+//     const {
+//       email,
+//       mobile,
+//       password,
+//       positionApplyingFor,
+//       skills,
+//       yearOfPassout,
+//       joinedInstitute,
+//       instituteName,
+//       college,
+//     } = req.body;
+
+//     // Check if email or mobile already exists
+//     const existing = await User.findOne({ $or: [{ email }, { mobile }] });
+//     if (existing) {
+//       return res.status(400).json({ message: "Email or mobile already registered" });
+//     }
+
+//     const otp = generateOTP();
+//     const otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+//     const user = await User.create({
+//       email,
+//       mobile,
+//       password,
+//       positionApplyingFor,
+//       skills,
+//       yearOfPassout,
+//       joinedInstitute,
+//       instituteName,
+//       college,
+//       otp,
+//       otpExpire,
+//       isVerified: false,
+//     });
+
+//     // Send OTP via email
+//     await sendEmail({
+//       to: email,
+//       subject: "OTP Verification",
+//       text: `Your OTP for registration is ${otp}`,
+//       html: `<p>Your OTP for registration is <b>${otp}</b></p>`,
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       message: "User registered. Please verify OTP sent to email.",
+//       userId: user._id,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+
+
 exports.registerUser = async (req, res) => {
   try {
     const {
+      name,   // <-- added
       email,
       mobile,
       password,
@@ -31,6 +90,7 @@ exports.registerUser = async (req, res) => {
     const otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     const user = await User.create({
+      name,                 // <-- added here
       email,
       mobile,
       password,
@@ -62,6 +122,7 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 // -----------------------------
 // VERIFY OTP
@@ -95,16 +156,34 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (!user.isVerified) return res.status(400).json({ message: "User not verified. Please check your email OTP." });
+    // Find user and populate appliedCompanies
+    const user = await User.findOne({ email }).populate({
+      path: "appliedCompanies",
+      select: "companyName CTC applicationDeadline companyLocation", // select fields you need
+    });
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    if (!user.isVerified)
+      return res.status(400).json({ message: "User not verified. Please check your email OTP." });
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(400).json({ message: "Incorrect password" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Incorrect password" });
 
-    const token = jwt.sign({ id: user._id, role: "user" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      { id: user._id, role: "user" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    res.status(200).json({ success: true, message: "Login successful", token, user });
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

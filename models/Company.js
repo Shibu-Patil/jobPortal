@@ -9,13 +9,38 @@ const companySchema = new mongoose.Schema(
       trim: true,
     },
 
+    // 🔗 added link fields
+    companyWebsite: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    jobDescriptionLink: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    applicationLink: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    brochureLink: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     applicationDeadline: {
       type: Date,
       required: true,
     },
 
     jobFunctions: {
-      type: [String], // multiple job roles
+      type: [String],
       required: true,
     },
 
@@ -25,33 +50,30 @@ const companySchema = new mongoose.Schema(
     },
 
     eligibilityCriteria: {
-      type: [String], // bullet points
+      type: [String],
       required: true,
     },
 
     companyLocation: {
-      type: [String], // e.g. ["Pune", "Bangalore"]
+      type: [String],
       required: true,
     },
 
     requiredSkills: {
-      type: [String], // multiple skills
+      type: [String],
       required: true,
     },
 
     placementOpportunities: {
-      type: [String], // multiple opportunities
+      type: [String],
       required: true,
     },
 
     roleOverview: {
-      type: [String], // paragraphs or points
+      type: [String],
       required: true,
     },
 
-    // -------------------------------
-    // Users who applied to this company
-    // -------------------------------
     usersApplied: [
       {
         type: mongoose.Schema.Types.ObjectId,

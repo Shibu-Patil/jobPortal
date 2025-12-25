@@ -4,12 +4,13 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
+    name: { type: String, required: true, trim: true }, // <-- added field
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     mobile: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
-    otp: { type: String }, // store OTP
-    otpExpire: { type: Date }, // OTP expiration time
+    otp: { type: String },
+    otpExpire: { type: Date },
     positionApplyingFor: {
       type: String,
       enum: ["development", "testing", "applicationSupport"],
@@ -20,6 +21,12 @@ const userSchema = new mongoose.Schema(
     joinedInstitute: { type: Boolean, default: false },
     instituteName: { type: String, default: "" },
     college: { type: String, required: true },
+    appliedCompanies: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Company",
+      },
+    ],
   },
   { timestamps: true }
 );
