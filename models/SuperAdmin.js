@@ -11,7 +11,6 @@ const superAdminSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-
     password: {
       type: String,
       required: true,
@@ -20,20 +19,19 @@ const superAdminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Hash password before saving
-superAdminSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+// ✅ Hash password before saving
+superAdminSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
-// Allow only ONE SuperAdmin in DB
+// ✅ Allow only ONE SuperAdmin in DB
 superAdminSchema.statics.canCreateSuperAdmin = async function () {
   const count = await this.countDocuments();
   return count === 0;
 };
 
-// Compare password method
+// ✅ Compare password method
 superAdminSchema.methods.comparePassword = async function (input) {
   return bcrypt.compare(input, this.password);
 };

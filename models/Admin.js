@@ -11,7 +11,6 @@ const adminSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-
     password: {
       type: String,
       required: true,
@@ -20,14 +19,13 @@ const adminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Hash password before saving
-adminSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+// ✅ Hash password before saving
+adminSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
-// Compare password method
+// ✅ Compare password method
 adminSchema.methods.comparePassword = async function (input) {
   return bcrypt.compare(input, this.password);
 };
